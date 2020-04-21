@@ -68,6 +68,10 @@ Additional props will be passed to the underlaying EpubView component, like url,
 _Container needs a height.._
 The ReactReader will expand to 100% of width/height, so be sure to set a height on the parent element, either with position it absolute of window, set height or use paddingTop for proporsjonal scaling.
 
+#### ReactReader API(using ref)
+- `getText` [Promise] - get then text content of current page
+- `setLocation` - set the current location
+
 ### Optional use the underlaying EpubView
 
 This is just the plain epub canvas, you will then need to implement the reader stuff like chapter (toc) navigation and next/prev buttons. Take a look at the implemention in ReactReader.js
