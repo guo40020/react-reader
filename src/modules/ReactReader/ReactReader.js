@@ -41,12 +41,16 @@ class ReactReader extends PureComponent {
   };
 
   next = () => {
+    const { pageChange } = this.props;
     const node = this.readerRef.current;
+    pageChange && pageChange(this.readerRef.current.location);
     node.nextPage();
   };
 
   prev = () => {
+    const { pageChange } = this.props;
     const node = this.readerRef.current;
+    pageChange && pageChange(this.readerRef.current.location);
     node.prevPage();
   };
 
@@ -81,6 +85,61 @@ class ReactReader extends PureComponent {
           <div style={styles.tocBackground} onClick={this.toggleToc} />
         )}
       </div>
+    );
+  }
+
+  makeRangeCfi(a, b) {
+    const CFI = new ePub.CFI();
+    const start = CFI.parse(a),
+      end = CFI.parse(b);
+    const cfi = {
+      range: true,
+      base: start.base,
+      path: {
+        steps: [],
+        terminal: null
+      },
+      start: start.path,
+      end: end.path
+    };
+    const len = cfi.start.steps.length;
+    for (let i = 0; i < len; i++) {
+      if (CFI.equalStep(cfi.start.steps[i], cfi.end.steps[i])) {
+        if (i == len - 1) {
+          // Last step is equal, check terminals
+          if (cfi.start.terminal === cfi.end.terminal) {
+            // CFI's are equal
+            cfi.path.steps.push(cfi.start.steps[i]);
+            // Not a range
+            cfi.range = false;
+          }
+        } else cfi.path.steps.push(cfi.start.steps[i]);
+      } else break;
+    }
+    cfi.start.steps = cfi.start.steps.slice(cfi.path.steps.length);
+    cfi.end.steps = cfi.end.steps.slice(cfi.path.steps.length);
+
+    return (
+      "epubcfi(" +
+      CFI.segmentString(cfi.base) +
+      "!" +
+      CFI.segmentString(cfi.path) +
+      "," +
+      CFI.segmentString(cfi.start) +
+      "," +
+      CFI.segmentString(cfi.end) +
+      ")"
+    );
+  }
+
+  getText() {
+    const rendition = this.readerRef.current.rendition;
+    const book = rendition.book;
+    return book.getRange(
+      this.makeRangeCfi(
+        rendition.location.start.cfi,
+        rendition.location.end.cfi
+      )
     );
   }
 
@@ -178,6 +237,7 @@ ReactReader.defaultProps = {
   locationChanged: null,
   tocChanged: null,
   showToc: true,
+  pageChange: null,
   styles: defaultStyles
 };
 
@@ -188,7 +248,8 @@ ReactReader.propTypes = {
   locationChanged: PropTypes.func,
   tocChanged: PropTypes.func,
   styles: PropTypes.object,
-  swipeable: PropTypes.bool
+  swipeable: PropTypes.bool,
+  pageChange: PropTypes.func
 };
 
 export default ReactReader;

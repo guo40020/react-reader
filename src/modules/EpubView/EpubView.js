@@ -99,8 +99,8 @@ class EpubView extends Component {
     const newLocation = loc && loc.start;
     if (location !== newLocation) {
       this.location = newLocation;
-      locationChanged && locationChanged(newLocation);
     }
+    locationChanged && locationChanged(newLocation);
   };
 
   renderBook() {
